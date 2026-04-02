@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test on hand tracking</title>
+    <link rel="stylesheet" href="https://unpkg.com/carbon-components@latest/css/carbon-components.css">
+    <style>
+        body {
+    padding: 20px;
+}
+
+.canvasbox {
+    border-radius: 3px;
+    margin-right: 10px;
+    width: 500px;
+    height: 500px;
+    border-bottom: 3px solid #0063FF;
+    box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.2), 0 4px 10px 0 #00000030;
+    background: #333;
+}
+
+.mb10 {
+    margin-bottom: 5px
+}
+
+.mt10 {
+    margin-top: 10px;
+}
+
+.updatenote {
+    padding: 15px;
+    background: red;
+    color: white;
+    display: inline-block;
+}
+.counter{
+    display: inline-block;
+}
+.imageForPoint{
+    position: absolute;
+    display: none;
+    width: 20px;
+    z-index: 1000;
+}
+.imageForOpen {
+    position: absolute;
+    display: none;
+    z-index: 1000;
+}
+.videobox{
+    display: none;
+}
+.border {
+    background-size: cover;
+    position: absolute;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 90%;
+    width: 90%;
+}
+.object{
+    width: 25px;
+    height: 25px;
+    background-color: orange;
+    border-radius: 25px;
+    display: none;
+    position: absolute;
+    z-index: 1;
+    top: 100px;
+    left: 100px;
+}
+.popup{
+    display: none;
+    position:absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    padding: 20px;
+    border-radius: 5px;
+    background-color: white;
+    z-index: 2;
+    text-align: center;
+}
+    </style>
+</head>
+<body class="bx--body p20">
+    <div id="popupPoint" class="imageForPoint">
+        <img src="https://preview.redd.it/fnnuohi0u7h71.png?width=640&crop=smart&auto=webp&s=a0f20224b579e83de30d596af44744cc6b8231a2" alt="nun much"
+        style="width: 500px;">
+    </div>
+    <div id="popupOpen" class="imageForOpen">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTokWhtpA8itDbya7EAgp9A_o3zc4-9D-G1CA&s" alt="mambo">
+    </div>
+    <div class="mb10">
+        <button onclick="toggleVideo()" id="tracker" class="bx--btn bx--btn--secondary" type="button">
+            Open Camera?
+        </button>
+        <div id="update" class="updatenote mt10">...</div>
+        <button onclick="popUpIns()" class="bx--btn bx--btn--secondary" style="background-color: rgb(141, 141, 1); color: black;">How To Play</button>
+        <div id="instructions" class="popup">
+            <h1>Welcome!</h1>
+            <p>You can play for a long time, or you can get the most points in 1 minute. Good luck!</p>
+            <p>It is best if you play at a distance to touch the object and get a point.</p>
+        </div>
+        <div id="points" class="counter">Points: 0 </div>
+        <div id="timer" class="timer" style="display: inline-block;">00:00</div>
+        <button onclick="startTimeS(60)" style="display: inline-block;">Start 1 Minute</button>
+        <div id="leaderboard" class="popup">
+            <h2>Your Highest Score:</h2>
+            <ol id="listahan"></ol>
+            <button onclick="disappear()">Okay</button>
+        </div>
+    </div>
+    <video class="videobox canvasbox" autoplay="autoplay" id="myVimeo">
+    </video>
+    <canvas id="canvas" class="border canvasbox"></canvas>
+    <div class="object" id="object"></div>
+    <script src="https://unpkg.com/carbon-components@latest/scripts/carbon-components.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/handtrackjs/dist/handtrack.min.js"></script>
+    <script>
+const video = document.getElementById("myVimeo");
+const canvas = document.getElementById("canvas");
+const context = canvas.getContext("2d");
+let trackButton = document.getElementById("tracker");
+let updateNote = document.getElementById("update");
+const object = document.getElementById("object");
+const pointers = document.getElementById("points");
+let points = 0;
+let timer;
+const display = document.getElementById("timer");
+const lead = document.getElementById("leaderboard");
+
+let isVideo = false;
+let model = null;
+
+function saveScore(e) { //compares current to highest
+    let scores = JSON.parse(localStorage.getItem("scores")) || [];
+    scores.push(e);
+    scores.sort((a, b) => b - a);  
+    scores = scores.slice(0, 1);   
+    localStorage.setItem("scores", JSON.stringify(scores));
+    displayLeaderboard();
+}
+
+function displayLeaderboard() {
+    let scores = JSON.parse(localStorage.getItem("scores")) || [];
+    const listing = document.getElementById("listahan");
+    
+    if (scores.length === 0) {
+        listing.innerHTML = "<li>No scores yet</li>";
+        return;
+    }
+    
+    listing.innerHTML = scores.map(score => `<li>${score}</li>`).join("");
+}
+function endGame() {
+    saveScore(points);
+    displayLeaderboard();
+}
+
+function startTimeS(ss){
+    clearInterval(timer);
+    reset();
+    let timeLeft = ss;
+    timer = setInterval(() => {
+        const minutes = Math.floor(timeLeft/60);
+        const seconds = timeLeft % 60;
+        display.innerText = `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+        if (timeLeft <= 0){
+            clearInterval(timer);
+            endGame();
+            lead.style.display = "block";
+        }
+        timeLeft--;
+    },1000); //1 second
+}
+function disappear(){
+    lead.style.display = "none";
+}
+
+const modelParams = {
+    flipHorizontal: true,   // flip e.g for video  
+    maxNumBoxes: 20,        // maximum number of boxes to detect
+    iouThreshold: 0.5,      // ioU threshold for non-max suppression
+    scoreThreshold: 0.6,    // confidence threshold for predictions.
+}
+
+function startVideo() {
+    handTrack.startVideo(video).then(function (status) {
+        console.log("video started", status);
+        if (status) {
+            updateNote.innerText = "✅"
+            object.style.display = "block";
+            isVideo = true
+            runDetection()
+        } else {
+            updateNote.innerText = "Please enable video"
+        }
+    });
+    trackButton.innerHTML = "Stop Camera?";
+}
+
+function toggleVideo() {
+    if (!isVideo) {
+        updateNote.innerText = "..."
+        startVideo();
+    } else {
+        updateNote.innerText = "..."
+        handTrack.stopVideo(video)
+        object.style.display = "none";
+        isVideo = false;
+        updateNote.innerText = "...";
+        trackButton.innerHTML = "Open Camera?"
+    }
+}
+
+function popUpIns(){
+    var pop = document.getElementById("instructions");
+    pop.style.display = (pop.style.display === "none") ? "block" : "none"; 
+}
+
+function pointsSys(){
+    points++;
+    pointers.innerText = "Points: "+points;
+}
+
+function reset(){
+    points = 0;
+    pointers.innerText = "Points: 0";
+}
+
+function repos(x,y){
+    const canPos = canvas.getBoundingClientRect();
+    object.style.left = (canPos.left + x) + "px";
+    object.style.top = (canPos.top + y) + "px";
+    pointsSys();
+}
+
+function checkCollide(e) {
+   const positionOb = object.getBoundingClientRect();
+   e.forEach(el => {
+    const hX = el.bbox[0] + el.bbox[2]/2;
+    const hY = el.bbox[1] + el.bbox[3]/2;
+    hW = el.bbox[2];
+    hH = el.bbox[3]; //declares hand size
+
+    //checks collision
+    if(hX < positionOb.right && hX + hW > positionOb.left && hY < positionOb.bottom && hY + hH > positionOb.top){
+        repos(Math.random() * (canvas.width - 50), Math.random() * (canvas.height - 50));
+    }
+   });
+}
+
+function runDetection() {
+    model.detect(video).then(predictions => {
+        console.log("Predictions: ", predictions);
+        model.renderPredictions(predictions, canvas, context, video);
+        checkCollide(predictions);
+        if (isVideo) {
+            requestAnimationFrame(runDetection);
+        }
+    });
+}
+
+// Load the model.
+handTrack.load(modelParams).then(lmodel => {
+    // detect objects in the image.
+    model = lmodel
+    updateNote.style.background = "green";
+    updateNote.innerText = "✅"
+    trackButton.disabled = false
+});
+    </script>
+</body>
+
+</html>
