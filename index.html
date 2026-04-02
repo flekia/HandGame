@@ -13,11 +13,12 @@
 .canvasbox {
     border-radius: 3px;
     margin-right: 10px;
-    width: 500px;
+    width: 1000px;
     height: 500px;
-    border-bottom: 3px solid #0063FF;
+    padding-bottom: 20px;
     box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.2), 0 4px 10px 0 #00000030;
     background: #333;
+    position: relative;
 }
 
 .mb10 {
@@ -51,14 +52,7 @@
 .videobox{
     display: none;
 }
-.border {
-    background-size: cover;
-    position: absolute;
-    background-position: center;
-    background-repeat: no-repeat;
-    height: 90%;
-    width: 90%;
-}
+
 .object{
     width: 25px;
     height: 25px;
@@ -66,6 +60,7 @@
     border-radius: 25px;
     display: none;
     position: absolute;
+    transform: translate(-50%,-50%);
     z-index: 1;
     top: 100px;
     left: 100px;
@@ -82,16 +77,22 @@
     z-index: 2;
     text-align: center;
 }
+@media (max-width: 768px){
+    .canvasbox{
+        width: 100%;
+        height: 400px;
+        position: relative;
+    }
+}
+@media (max-width:420px){
+    .canvasbox{
+        width: 100%;
+        height: 300px;
+    }
+}
     </style>
 </head>
 <body class="bx--body p20">
-    <div id="popupPoint" class="imageForPoint">
-        <img src="https://preview.redd.it/fnnuohi0u7h71.png?width=640&crop=smart&auto=webp&s=a0f20224b579e83de30d596af44744cc6b8231a2" alt="nun much"
-        style="width: 500px;">
-    </div>
-    <div id="popupOpen" class="imageForOpen">
-        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTokWhtpA8itDbya7EAgp9A_o3zc4-9D-G1CA&s" alt="mambo">
-    </div>
     <div class="mb10">
         <button onclick="toggleVideo()" id="tracker" class="bx--btn bx--btn--secondary" type="button">
             Open Camera?
@@ -112,10 +113,11 @@
             <button onclick="disappear()">Okay</button>
         </div>
     </div>
-    <video class="videobox canvasbox" autoplay="autoplay" id="myVimeo">
-    </video>
-    <canvas id="canvas" class="border canvasbox"></canvas>
+    <div style="position: relative; display: inline-block;">
+    <video class="videobox canvasbox" autoplay="autoplay" id="myVimeo"></video>
+    <canvas id="canvas" class="canvasbox"></canvas>
     <div class="object" id="object"></div>
+    </div>
     <script src="https://unpkg.com/carbon-components@latest/scripts/carbon-components.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/handtrackjs/dist/handtrack.min.js"></script>
     <script>
@@ -143,7 +145,7 @@ function saveScore(e) { //compares current to highest
     displayLeaderboard();
 }
 
-function displayLeaderboard() {
+function displayLeaderboard() { //saves in browser cache, like what cevent and my runs did
     let scores = JSON.parse(localStorage.getItem("scores")) || [];
     const listing = document.getElementById("listahan");
     
@@ -154,7 +156,7 @@ function displayLeaderboard() {
     
     listing.innerHTML = scores.map(score => `<li>${score}</li>`).join("");
 }
-function endGame() {
+function endGame() { //shows leaderboard
     saveScore(points);
     displayLeaderboard();
 }
@@ -166,7 +168,7 @@ function startTimeS(ss){
     timer = setInterval(() => {
         const minutes = Math.floor(timeLeft/60);
         const seconds = timeLeft % 60;
-        display.innerText = `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+        display.innerText = `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;//formats time
         if (timeLeft <= 0){
             clearInterval(timer);
             endGame();
@@ -205,6 +207,7 @@ function toggleVideo() {
     if (!isVideo) {
         updateNote.innerText = "..."
         startVideo();
+        reset();
     } else {
         updateNote.innerText = "..."
         handTrack.stopVideo(video)
@@ -217,7 +220,7 @@ function toggleVideo() {
 
 function popUpIns(){
     var pop = document.getElementById("instructions");
-    pop.style.display = (pop.style.display === "none") ? "block" : "none"; 
+    pop.style.display = (pop.style.display === "none") ? "block" : "none"; //ternary operator😱😱😱
 }
 
 function pointsSys(){
@@ -232,22 +235,35 @@ function reset(){
 
 function repos(x,y){
     const canPos = canvas.getBoundingClientRect();
-    object.style.left = (canPos.left + x) + "px";
-    object.style.top = (canPos.top + y) + "px";
+    const objWidth = object.offsetWidth;
+    const objHeight = object.offsetHeight;
+    
+    const maxX = canvas.width - objWidth - 200; //-10 to not be near the border
+    const maxY = canvas.height - objHeight - 200;
+    const insideX = Math.max(0, Math.min(x, maxX));
+    const insideY = Math.max(0, Math.min(y, maxY));
+    
+    object.style.left = (canPos.left + insideX) + "px";
+    object.style.top = (canPos.top + insideY) + "px";
     pointsSys();
 }
 
 function checkCollide(e) {
    const positionOb = object.getBoundingClientRect();
+   const canvasRect = canvas.getBoundingClientRect();
+   const scaleX = canvasRect.width / canvas.width;
+   const scaleY = canvasRect.height / canvas.height;
    e.forEach(el => {
-    const hX = el.bbox[0] + el.bbox[2]/2;
-    const hY = el.bbox[1] + el.bbox[3]/2;
-    hW = el.bbox[2];
-    hH = el.bbox[3]; //declares hand size
+    const handLeft = canvasRect.left + (el.bbox[0] * scaleX);
+    const handTop = canvasRect.top + (el.bbox[1] * scaleY);
+    const handRight = handLeft + (el.bbox[2] * scaleX);
+    const handBottom = handTop + (el.bbox[3] * scaleY);
 
-    //checks collision
-    if(hX < positionOb.right && hX + hW > positionOb.left && hY < positionOb.bottom && hY + hH > positionOb.top){
-        repos(Math.random() * (canvas.width - 50), Math.random() * (canvas.height - 50));
+    if(handLeft < positionOb.right && 
+       handRight > positionOb.left && 
+       handTop < positionOb.bottom && 
+       handBottom > positionOb.top) {
+        repos(Math.random() * (canvas.width - 75), Math.random() * (canvas.height - 75));
     }
    });
 }
@@ -273,5 +289,4 @@ handTrack.load(modelParams).then(lmodel => {
 });
     </script>
 </body>
-
 </html>
