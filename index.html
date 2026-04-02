@@ -246,8 +246,8 @@ function repos(x,y){
     const insideX = Math.max(0, Math.min(x * seX, maxX));
     const insideY = Math.max(0, Math.min(y * seY, maxY));
     
-    object.style.left = (canPos.left + insideX) + "px";
-    object.style.top = (canPos.top + insideY) + "px";
+    object.style.left = insideX + "px";
+    object.style.top = insideY + "px";
     pointsSys();
 }
 
