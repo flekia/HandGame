@@ -238,10 +238,14 @@ function repos(x,y){
     const objWidth = object.offsetWidth;
     const objHeight = object.offsetHeight;
     
-    const maxX = canvas.width - objWidth - 200; //-10 to not be near the border
-    const maxY = canvas.height - objHeight - 200;
-    const insideX = Math.max(0, Math.min(x, maxX));
-    const insideY = Math.max(0, Math.min(y, maxY));
+    const seX = canPos.width / canvas.width;
+    const seY = canPos.height / canvas.height;
+    
+    const maxX = canPos.width - objWidth;
+    const maxY = canPos.height - objHeight;
+
+    const insideX = Math.max(0, Math.min(x * seX, maxX));
+    const insideY = Math.max(0, Math.min(y * seY, maxY));
     
     object.style.left = (canPos.left + insideX) + "px";
     object.style.top = (canPos.top + insideY) + "px";
@@ -249,21 +253,25 @@ function repos(x,y){
 }
 
 function checkCollide(e) {
-   const positionOb = object.getBoundingClientRect();
+   const pOb = object.getBoundingClientRect();
    const canvasRect = canvas.getBoundingClientRect();
-   const scaleX = canvasRect.width / canvas.width;
-   const scaleY = canvasRect.height / canvas.height;
+   const seX = canvasRect.width / canvas.width;
+   const seY = canvasRect.height / canvas.height;
+   
    e.forEach(el => {
-    const handLeft = canvasRect.left + (el.bbox[0] * scaleX);
-    const handTop = canvasRect.top + (el.bbox[1] * scaleY);
-    const handRight = handLeft + (el.bbox[2] * scaleX);
-    const handBottom = handTop + (el.bbox[3] * scaleY);
+    const handLeft = canvasRect.left + (el.bbox[0] * seX);
+    const handTop = canvasRect.top + (el.bbox[1] * seY);
+    const handRight = handLeft + (el.bbox[2] * seX);
+    const handBottom = handTop + (el.bbox[3] * seY);
 
-    if(handLeft < positionOb.right && 
-       handRight > positionOb.left && 
-       handTop < positionOb.bottom && 
-       handBottom > positionOb.top) {
-        repos(Math.random() * (canvas.width - 75), Math.random() * (canvas.height - 75));
+    if(handLeft < pOb.right && 
+       handRight > pOb.left && 
+       handTop < pOb.bottom && 
+       handBottom > pOb.top) {
+
+        const randomX = Math.random() * canvas.width;
+        const randomY = Math.random() * canvas.height;
+        repos(randomX, randomY);
     }
    });
 }
