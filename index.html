@@ -60,7 +60,6 @@
     border-radius: 25px;
     display: none;
     position: absolute;
-    transform: translate(-50%,-50%);
     z-index: 1;
     top: 100px;
     left: 100px;
@@ -241,13 +240,11 @@ function repos(x,y){
     const seX = canPos.width / canvas.width;
     const seY = canPos.height / canvas.height;
     
-    const minX = objWidth / 2;
-    const maxX = canPos.width - objWidth / 2;
-    const minY = objHeight / 2;
-    const maxY = canPos.height - objHeight / 2;
+    const maxX = canPos.width - objWidth;
+    const maxY = canPos.height - objHeight;
 
-    const insideX = Math.max(minX, Math.min(x * seX, maxX));
-    const insideY = Math.max(minY, Math.min(y * seY, maxY));
+    const insideX = Math.max(0, Math.min(x * seX, maxX));
+    const insideY = Math.max(0, Math.min(y * seY, maxY));
     
     object.style.left = (canPos.left + insideX) + "px";
     object.style.top = (canPos.top + insideY) + "px";
