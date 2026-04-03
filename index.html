@@ -13,9 +13,9 @@
 .canvasbox {
     border-radius: 3px;
     margin-right: 10px;
-    width: 1000px;
-    height: 500px;
-    padding-bottom: 20px;
+    width: 90%;
+    height: 1250px;
+    padding-top: 20px;
     box-shadow: 0 2px 3px 0 rgba(0, 0, 0, 0.2), 0 4px 10px 0 #00000030;
     background: #333;
     position: relative;
@@ -76,17 +76,17 @@
     z-index: 2;
     text-align: center;
 }
-@media (max-width: 768px){
+@media (max-width: 956px){
     .canvasbox{
         width: 100%;
-        height: 400px;
+        height: 300px;
         position: relative;
     }
 }
 @media (max-width:420px){
     .canvasbox{
-        width: 100%;
-        height: 300px;
+        width: 90%;
+        height: 200px;
     }
 }
     </style>
@@ -97,11 +97,12 @@
             Open Camera?
         </button>
         <div id="update" class="updatenote mt10">...</div>
-        <button onclick="popUpIns()" class="bx--btn bx--btn--secondary" style="background-color: rgb(141, 141, 1); color: black;">How To Play</button>
+        <button onclick="popUpIns()" class="bx--btn bx--btn--secondary" style="background-color: rgb(141, 141, 1); color: black;">Instructions</button>
         <div id="instructions" class="popup">
             <h1>Welcome!</h1>
             <p>You can play for a long time, or you can get the most points in 1 minute. Good luck!</p>
             <p>It is best if you play at a distance to touch the object and get a point.</p>
+            <p>Press [Instructions] to close this tab.</p>
         </div>
         <div id="points" class="counter">Points: 0 </div>
         <div id="timer" class="timer" style="display: inline-block;">00:00</div>
@@ -139,6 +140,7 @@ function saveScore(e) { //compares current to highest
     let scores = JSON.parse(localStorage.getItem("scores")) || [];
     scores.push(e);
     scores.sort((a, b) => b - a);  
+    //mom, there's "love's joy" and "love's sorrow," how come you always play love's sorrow?
     scores = scores.slice(0, 1);   
     localStorage.setItem("scores", JSON.stringify(scores));
     displayLeaderboard();
@@ -210,6 +212,7 @@ function toggleVideo() {
     } else {
         updateNote.innerText = "..."
         handTrack.stopVideo(video)
+        //i need you to adapt to sorrow
         object.style.display = "none";
         isVideo = false;
         updateNote.innerText = "...";
@@ -237,7 +240,7 @@ function repos(x,y){
     const objWidth = object.offsetWidth;
     const objHeight = object.offsetHeight;
     
-    const seX = canPos.width / canvas.width;
+    const seX = canPos.width / canvas.width; //hehe sex hehe
     const seY = canPos.height / canvas.height;
     
     const maxX = canPos.width - objWidth;
@@ -254,6 +257,7 @@ function repos(x,y){
 function checkCollide(e) {
    const pOb = object.getBoundingClientRect();
    const canvasRect = canvas.getBoundingClientRect();
+    //wanna commit a double suicide with me?
    const seX = canvasRect.width / canvas.width;
    const seY = canvasRect.height / canvas.height;
    
