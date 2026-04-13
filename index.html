@@ -140,7 +140,6 @@ function saveScore(e) { //compares current to highest
     let scores = JSON.parse(localStorage.getItem("scores")) || [];
     scores.push(e);
     scores.sort((a, b) => b - a);  
-    //mom, there's "love's joy" and "love's sorrow," how come you always play love's sorrow?
     scores = scores.slice(0, 1);   
     localStorage.setItem("scores", JSON.stringify(scores));
     displayLeaderboard();
@@ -149,13 +148,13 @@ function saveScore(e) { //compares current to highest
 function displayLeaderboard() { //saves in browser cache, like what cevent and my runs did
     let scores = JSON.parse(localStorage.getItem("scores")) || [];
     const listing = document.getElementById("listahan");
-    
     if (scores.length === 0) {
-        listing.innerHTML = "<li>No scores yet</li>";
+        listing.innerHTML = "<li>No scores yet</li>"; 
         return;
     }
     
     listing.innerHTML = scores.map(score => `<li>${score}</li>`).join("");
+    listing.innerHTML += "Your current score: " + points;
 }
 function endGame() { //shows leaderboard
     saveScore(points);
@@ -212,7 +211,6 @@ function toggleVideo() {
     } else {
         updateNote.innerText = "..."
         handTrack.stopVideo(video)
-        //i need you to adapt to sorrow
         object.style.display = "none";
         isVideo = false;
         updateNote.innerText = "...";
@@ -228,6 +226,7 @@ function popUpIns(){
 function pointsSys(){
     points++;
     pointers.innerText = "Points: "+points;
+    let currentScore = points;
 }
 
 function reset(){
@@ -257,7 +256,6 @@ function repos(x,y){
 function checkCollide(e) {
    const pOb = object.getBoundingClientRect();
    const canvasRect = canvas.getBoundingClientRect();
-    //wanna commit a double suicide with me?
    const seX = canvasRect.width / canvas.width;
    const seY = canvasRect.height / canvas.height;
    
